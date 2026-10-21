@@ -52,7 +52,7 @@ jobs:
           7za x -osrc dl/*-extra.7z
           rm -rf src/Far src/arm64/7-ZipFar.dll   # ignore the Far plugin
 
-          common=(7-zip.chm history.txt License.txt readme.txt)
+          common=(License.txt)
 
           pack() { # name, dir containing 7za.dll/7za.exe/7zxa.dll
             local name="$1" dir="$2" stage="stage-$1"
