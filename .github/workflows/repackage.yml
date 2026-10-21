@@ -54,11 +54,11 @@ jobs:
 
           common=(License.txt)
 
-          pack() { # name, dir containing 7za.dll/7za.exe/7zxa.dll
+          pack() { # name, dir containing 7za.exe
             local name="$1" dir="$2" stage="stage-$1"
             rm -rf "$stage"; mkdir "$stage"
             for f in "${common[@]}"; do cp "src/$f" "$stage/"; done
-            cp "src/$dir"/7za.dll "src/$dir"/7za.exe "src/$dir"/7zxa.dll "$stage/"
+            cp "src/$dir/7za.exe" "$stage/"
             (cd "$stage" && zip -9 -r "../out/7zip-extra-$ver-$name.zip" .)
           }
 
