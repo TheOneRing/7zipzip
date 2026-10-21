@@ -1,0 +1,76 @@
+name: Repackage 7-Zip extra
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'ip7z/7zip release tag to repackage (default: latest)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  repackage:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Determine upstream release
+        id: up
+        run: |
+          tag="${{ github.event.inputs.tag }}"
+          if [ -z "$tag" ]; then
+            tag=$(gh api repos/ip7z/7zip/releases/latest --jq .tag_name)
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install 7-Zip
+        if: steps.up.outputs.exists == 'false'
+        run: sudo apt-get update && sudo apt-get install -y 7zip zip
+
+      - name: Download extra package
+        if: steps.up.outputs.exists == 'false'
+        run: |
+          gh release download "${{ steps.up.outputs.tag }}" --repo ip7z/7zip \
+            --pattern '*-extra.7z' --dir dl
+          ls -l dl
+
+      - name: Extract and repackage
+        if: steps.up.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          ver="${{ steps.up.outputs.tag }}"
+          mkdir src out
+          7zz x -osrc dl/*-extra.7z
+          rm -rf src/Far src/arm64/7-ZipFar.dll   # ignore the Far plugin
+
+          common=(7-zip.chm history.txt License.txt readme.txt)
+
+          pack() { # name, dir containing 7za.dll/7za.exe/7zxa.dll
+            local name="$1" dir="$2" stage="stage-$1"
+            rm -rf "$stage"; mkdir "$stage"
+            for f in "${common[@]}"; do cp "src/$f" "$stage/"; done
+            cp "src/$dir"/7za.dll "src/$dir"/7za.exe "src/$dir"/7zxa.dll "$stage/"
+            (cd "$stage" && zip -9 -r "../out/7zip-extra-$ver-$name.zip" .)
+          }
+
+          pack x86 .        # files at the archive root are 32-bit
+          pack x64 x64
+          pack arm64 arm64
+          ls -l out
+
+      - name: Publish release
+        if: steps.up.outputs.exists == 'false'
+        run: |
+          tag="${{ steps.up.outputs.tag }}"
+          gh release create "$tag" out/*.zip --repo "$GITHUB_REPOSITORY" \
+            --title "7-Zip extra $tag" \
+            --notes "Repackaged from https://github.com/ip7z/7zip/releases/tag/$tag (one zip per architecture, Far plugin removed)."
