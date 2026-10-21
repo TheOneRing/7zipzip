@@ -63,7 +63,7 @@ jobs:
           }
 
           pack x86 .        # files at the archive root are 32-bit
-          pack x64 x64
+          pack x86_64 x64
           pack arm64 arm64
           (cd out && sha256sum *.zip > SHA256.txt && cat SHA256.txt)
           ls -l out

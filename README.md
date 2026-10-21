@@ -9,7 +9,7 @@ A GitHub Action watches [ip7z/7zip](https://github.com/ip7z/7zip/releases) for n
 Each release is tagged like the upstream release and contains:
 
 - `7zip-extra-<tag>-x86.zip`
-- `7zip-extra-<tag>-x64.zip`
+- `7zip-extra-<tag>-x86_64.zip`
 - `7zip-extra-<tag>-arm64.zip`
 - `SHA256.txt` with the checksums of the zips
 
