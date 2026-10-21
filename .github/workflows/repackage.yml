@@ -65,12 +65,13 @@ jobs:
           pack x86 .        # files at the archive root are 32-bit
           pack x64 x64
           pack arm64 arm64
+          (cd out && sha256sum *.zip > SHA256.txt && cat SHA256.txt)
           ls -l out
 
       - name: Publish release
         if: steps.up.outputs.exists == 'false'
         run: |
           tag="${{ steps.up.outputs.tag }}"
-          gh release create "$tag" out/*.zip --repo "$GITHUB_REPOSITORY" \
+          gh release create "$tag" out/*.zip out/SHA256.txt --repo "$GITHUB_REPOSITORY" \
             --title "7-Zip extra $tag" \
             --notes "Repackaged from https://github.com/ip7z/7zip/releases/tag/$tag (one zip per architecture, Far plugin removed)."
