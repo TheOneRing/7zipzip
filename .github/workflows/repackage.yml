@@ -2,7 +2,7 @@ name: Repackage 7-Zip extra
 
 on:
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '17 0 * * 0'
   workflow_dispatch:
     inputs:
       tag:
